@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_USER: minioadmin
+      MINIO_PASSWORD: minioadmin
+    tmpfs:
+      - /data:rw,size=20M
+    command: server /data --console-address ":9001"
+
+  
+  minio-setup:
+    image: minio/minio
+    container_name: minio-setup
+    depends_on:
+      - minio
+    build:
+      context: .
+    volumes:
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: /bin/bash /entrypoint.sh
+    environment:
+      - MINIO_USER=minioadmin
+      - MINIO_PASSWORD=minioadmin
+  
+  python-script:
+    build: .
+    container_name: python-script
+    depends_on:
+      - minio
+    volumes:
+      - .:/python_script
